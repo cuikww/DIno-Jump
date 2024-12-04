@@ -9,7 +9,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Timer timer;
     private Doodler doodler;
     private ArrayList<Platform> platforms;
-    private Image background;
+    private Image background, background2;
     private boolean gameOver;
     private int score;
     private int backgroundOffset;
@@ -17,11 +17,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     public GamePanel() {
         this.setFocusable(true);
         this.addKeyListener(this);
-        background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage().getScaledInstance(360, 2000, Image.SCALE_SMOOTH);
+        background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
+        background2 = new ImageIcon(getClass().getResource("/assets/Space2.png")).getImage();
         doodler = new Doodler(160, 480);
         platforms = new ArrayList<>();
         initializePlatforms();
-
         timer = new Timer(16, this); // ~60 FPS
         gameOver = false;
         score = 0;
@@ -48,15 +48,24 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Menggambar latar belakang secara looping
-        int imageHeight = background.getHeight(null);
+        // Dapatkan ukuran panel
+        int panelWidth = getWidth();
         int panelHeight = getHeight();
+        int imageWidth = background.getWidth(null);
+        int imageHeight = background.getHeight(null);
 
-        // Gambar latar belakang pertama
-        g.drawImage(background, 0, -imageHeight + panelHeight + backgroundOffset, getWidth(), imageHeight, null);
+        // Menghitung ukuran background agar sesuai dengan panel
+        double scaleX = (double) panelWidth / imageWidth;
+        double scaleY = (double) panelHeight / imageHeight;
+        double scaleFactor = Math.max(scaleX, scaleY); // Menggunakan faktor skala yang lebih besar agar tidak pecah
 
-        // Gambar latar belakang kedua (untuk looping)
-        g.drawImage(background, 0, panelHeight + backgroundOffset, getWidth(), imageHeight, null);
+        // Skala background
+        int scaledWidth = (int) (imageWidth * scaleFactor);
+        int scaledHeight = (int) (imageHeight * scaleFactor);
+
+        // Menggambar latar belakang secara looping
+        g.drawImage(background, 0, -scaledHeight + panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
+        g.drawImage(background, 0, panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
 
         if (gameOver) {
             g.setColor(Color.BLACK);
@@ -109,6 +118,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             // Kondisi game over
             if (doodler.getY() > getHeight()) {
                 gameOver = true;
+                backgroundOffset = 0;
             }
         }
         repaint();
