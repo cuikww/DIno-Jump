@@ -9,7 +9,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Timer timer;
     private Doodler doodler;
     private ArrayList<Platform> platforms;
-    private Image background, background2;
+    private Image background;
     private boolean gameOver;
     private int score;
     private int backgroundOffset;
@@ -18,7 +18,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         this.setFocusable(true);
         this.addKeyListener(this);
         background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
-        background2 = new ImageIcon(getClass().getResource("/assets/Space2.png")).getImage();
         doodler = new Doodler(160, 480);
         platforms = new ArrayList<>();
         initializePlatforms();
