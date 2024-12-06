@@ -9,6 +9,7 @@ public class LoginPage {
     private JFrame frame;
     private JPanel loginPanel;
     private JPanel registerPanel;
+    private String username;
 
     public LoginPage() {
         // Frame utama
@@ -85,7 +86,8 @@ public class LoginPage {
                 if (Database.login(username, password)) {
                     lblError.setText("");
                     frame.dispose(); // Tutup login frame
-                    openGamePanel();
+                    LoginPage.this.username = username; // Menyimpan username yang berhasil login
+                    openGamePanel(); // Membuka game panel
                 } else {
                     lblError.setText("Invalid username or password.");
                 }
@@ -208,7 +210,7 @@ public class LoginPage {
 
     private void openGamePanel() {
         JFrame gameFrame = new JFrame("Dino Jump");
-        GamePanel gamePanel = new GamePanel();
+        GamePanel gamePanel = new GamePanel(username); // Pass username ke GamePanel
 
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gameFrame.setSize(360, 630);
