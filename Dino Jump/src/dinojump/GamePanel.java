@@ -13,21 +13,32 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean gameOver;
     private int score;
     private int backgroundOffset;
+    private String username;
+    private int bestScore;
+    private java.util.List<String> leaderboard;
+    private AudioManager audioManager;
 
-    public GamePanel() {
+
+    public GamePanel(String username) {
+        this.username = username; // Menyimpan username
         this.setFocusable(true);
         this.addKeyListener(this);
-        background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage().getScaledInstance(360, 2000, Image.SCALE_SMOOTH);
+        background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
         doodler = new Doodler(160, 480);
         platforms = new ArrayList<>();
         initializePlatforms();
-
         timer = new Timer(16, this); // ~60 FPS
         gameOver = false;
         score = 0;
         backgroundOffset = 0;
-    }
+        this.bestScore = Database.getBestScore(username); // Ambil best score dari database
+        this.leaderboard = Database.getTop5BestScores(); // Ambil leaderboard dari database
 
+        audioManager = new AudioManager();
+        audioManager.load("src\\assets\\sounds\\background_music.wav");
+        audioManager.play();
+    }
+    
     public void startGame() {
         timer.start();
     }
@@ -42,36 +53,66 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 platforms.add(new Platform(x, y));
             }
         }
-    }    
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        // Menggambar latar belakang secara looping
-        int imageHeight = background.getHeight(null);
+    
+        // Dapatkan ukuran panel
+        int panelWidth = getWidth();
         int panelHeight = getHeight();
-
-        // Gambar latar belakang pertama
-        g.drawImage(background, 0, -imageHeight + panelHeight + backgroundOffset, getWidth(), imageHeight, null);
-
-        // Gambar latar belakang kedua (untuk looping)
-        g.drawImage(background, 0, panelHeight + backgroundOffset, getWidth(), imageHeight, null);
-
+        int imageWidth = background.getWidth(null);
+        int imageHeight = background.getHeight(null);
+    
+        // Menghitung ukuran background agar sesuai dengan panel
+        double scaleX = (double) panelWidth / imageWidth;
+        double scaleY = (double) panelHeight / imageHeight;
+        double scaleFactor = Math.max(scaleX, scaleY); // Menggunakan faktor skala yang lebih besar agar tidak pecah
+    
+        // Skala background
+        int scaledWidth = (int) (imageWidth * scaleFactor);
+        int scaledHeight = (int) (imageHeight * scaleFactor);
+    
+        // Menggambar latar belakang secara looping
+        g.drawImage(background, 0, -scaledHeight + panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
+        g.drawImage(background, 0, panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
+    
         if (gameOver) {
             g.setColor(Color.BLACK);
             g.drawString("Game Over! Press Space to Restart", 80, 280);
+            audioManager.stop(); // Stop the music
             return;
         }
-
+    
+        // Gambar elemen game
         doodler.draw(g);
-
         for (Platform platform : platforms) {
             platform.draw(g);
         }
-
-        g.setColor(Color.BLACK);
-        g.drawString("Score: " + score, 10, 20);
+    
+        // Menampilkan informasi skor dalam kotak transparan
+        g.setColor(new Color(0, 0, 0, 150)); // Warna hitam dengan transparansi
+        g.fillRect(10, 10, 150, 80); // Kotak transparan untuk teks
+    
+        g.setColor(Color.WHITE); // Warna teks putih
+        g.setFont(new Font("Arial", Font.PLAIN, 18));
+        g.drawString("Score: " + score, 20, 30);
+        g.drawString("Best Score: " + bestScore, 20, 50); // Menampilkan best score
+        g.drawString("Player: " + username, 20, 70); // Menampilkan username
+    
+        // Menampilkan leaderboard dalam kotak transparan
+        g.setColor(new Color(0, 0, 0, 150)); // Warna hitam dengan transparansi
+        g.fillRect(panelWidth - 170, 10, 150, 80); // Kotak transparan untuk leaderboard
+    
+        g.setColor(Color.WHITE); // Warna teks putih
+        g.setFont(new Font("Arial", Font.PLAIN, 14));
+        g.drawString("Leaderboard:", panelWidth - 150, 25);
+        int yPosition = 40;
+        for (int i = 0; i < leaderboard.size(); i++) {
+            g.drawString((i + 1) + ". " + leaderboard.get(i), panelWidth - 150, yPosition);
+            yPosition += 20;
+        }
     }
 
     @Override
@@ -109,10 +150,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             // Kondisi game over
             if (doodler.getY() > getHeight()) {
                 gameOver = true;
+                backgroundOffset = 0;
+
+                // Update best score jika score lebih tinggi
+                if (score > bestScore) {
+                    bestScore = score;
+                    Database.updateBestScore(username, bestScore); // Perbarui best score di database
+                }
+
+                // Refresh leaderboard
+                this.leaderboard = Database.getTop5BestScores();
             }
         }
         repaint();
     }
+
     
     @Override
     public void keyPressed(KeyEvent e) {
@@ -139,5 +191,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         doodler.resetPosition(160, 480);
         platforms.clear();
         initializePlatforms();
+        audioManager.play();
     }
 }

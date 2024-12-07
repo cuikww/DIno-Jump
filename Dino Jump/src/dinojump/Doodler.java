@@ -26,6 +26,12 @@ public class Doodler extends GameObject {
         x += velocityX;
         if (x < 0) x = 360;
         if (x > 360) x = 0;
+
+        // Mencegah doodler keluar dari layar
+        if (y < 0) {
+            y = 0;
+            velocityY = 0;
+        }
     }
 
     public void draw(Graphics g) {
