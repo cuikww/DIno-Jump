@@ -17,7 +17,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int bestScore;
     private java.util.List<String> leaderboard;
 
-
     public GamePanel(String username) {
         this.username = username; // Menyimpan username
         this.setFocusable(true);
@@ -109,9 +108,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
     
-
-
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!gameOver) {
@@ -162,7 +158,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         repaint();
     }
 
-    
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_LEFT) {
