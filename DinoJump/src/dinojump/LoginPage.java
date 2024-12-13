@@ -87,7 +87,7 @@ public class LoginPage {
                     lblError.setText("");
                     frame.dispose(); // Tutup login frame
                     LoginPage.this.username = username; // Menyimpan username yang berhasil login
-                    openGamePanel(); // Membuka game panel
+                    openStartPanel(); // Membuka StartPanel dengan username yang tepat
                 } else {
                     lblError.setText("Invalid username or password.");
                 }
@@ -208,18 +208,17 @@ public class LoginPage {
         return button;
     }
 
-    private void openGamePanel() {
-        JFrame gameFrame = new JFrame("Dino Jump");
-        GamePanel gamePanel = new GamePanel(username); // Pass username ke GamePanel
-
-        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameFrame.setSize(360, 630);
-        gameFrame.add(gamePanel);
-        gameFrame.setResizable(false);
-        gameFrame.setLocationRelativeTo(null);
-        gameFrame.setVisible(true);
-
-        gamePanel.startGame();
+    private void openStartPanel() {
+        // Create the start frame and panel
+        JFrame startFrame = new JFrame("Dino Jump - Start Panel");
+        StartPanel startPanel = new StartPanel(username, startFrame); // Pass username and startFrame to StartPanel
+    
+        startFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        startFrame.setSize(360, 630);
+        startFrame.add(startPanel);
+        startFrame.setResizable(false);
+        startFrame.setLocationRelativeTo(null);
+        startFrame.setVisible(true);
     }
 
     private void showPanel(String panelName) {

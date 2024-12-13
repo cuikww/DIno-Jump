@@ -11,10 +11,13 @@ public class Doodler extends GameObject {
     private boolean facingRight;
     private boolean isOnPlatform;
 
-    public Doodler(int x, int y) {
+    public Doodler(int x, int y, String characterName) {
         super(x, y, 50, 50);
-        dinoLeft = new ImageIcon(getClass().getResource("/assets/player-dino-left.png")).getImage();
-        dinoRight = new ImageIcon(getClass().getResource("/assets/player-dino-right.png")).getImage();
+
+        // Memuat gambar berdasarkan karakter yang dipilih
+        dinoLeft = new ImageIcon(getClass().getResource("/assets/" + characterName + "_left.png")).getImage();
+        dinoRight = new ImageIcon(getClass().getResource("/assets/" + characterName + "_right.png")).getImage();
+
         velocityY = 0;
         velocityX = 0;
         facingRight = true;
@@ -46,7 +49,6 @@ public class Doodler extends GameObject {
             velocityY = 0;
         }
     }
-    
 
     public void draw(Graphics g) {
         if (facingRight) {
@@ -62,7 +64,6 @@ public class Doodler extends GameObject {
             isOnPlatform = false;
         }
     }
-    
 
     public void moveLeft() {
         velocityX = -5;

@@ -22,16 +22,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private java.util.List<String> leaderboard;
     private List<Platform> passedPlatforms;
 
-
-    public GamePanel(String username) {
-        this.username = username; // Menyimpan username
+    public GamePanel(String username, String selectedCharacter) {
+        this.username = username;
         this.setFocusable(true);
         this.addKeyListener(this);
+
+        // Muat background
         background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
-        doodler = new Doodler(160, 430);
+
+        // Muat Doodler dengan karakter yang dipilih
+        doodler = new Doodler(160, 430, selectedCharacter);
+
         platforms = new ArrayList<>();
         passedPlatforms = new ArrayList<>(); // Initialize passedPlatforms list here
         initializePlatforms();
+
         timer = new Timer(16, this); // ~60 FPS
         gameOver = false;
         score = 0;
@@ -60,7 +65,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    
     public void startGame() {
         timer.start();
     }
@@ -86,62 +90,105 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         int panelHeight = getHeight();
         int imageWidth = background.getWidth(null);
         int imageHeight = background.getHeight(null);
-    
+        
         // Menghitung ukuran background agar sesuai dengan panel
         double scaleX = (double) panelWidth / imageWidth;
         double scaleY = (double) panelHeight / imageHeight;
         double scaleFactor = Math.max(scaleX, scaleY);
-    
+        
         // Skala background
         int scaledWidth = (int) (imageWidth * scaleFactor);
         int scaledHeight = (int) (imageHeight * scaleFactor);
-    
+        
         // Menggambar latar belakang secara looping
         g.drawImage(background, 0, -scaledHeight + panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
         g.drawImage(background, 0, panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
-    
+        
         if (gameOver) {
-            g.setColor(Color.BLACK);
-            g.drawString("Game Over! Press Space to Restart", 80, 280);
+            // Game Over Panel Background (semi-transparent)
+            g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
+            g.fillRect(50, 150, panelWidth - 100, 200); // Panel for game over info
+            
+            // Game Over Message
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            String gameOverText = "Game Over!";
+            FontMetrics metrics = g.getFontMetrics();
+            int x = (panelWidth - metrics.stringWidth(gameOverText)) / 2;
+            int y = 200;
+            g.drawString(gameOverText, x, y);
+            
+            // Score Display
+            g.setFont(new Font("Arial", Font.PLAIN, 22));
+            String scoreText = "Your Score: " + score;
+            metrics = g.getFontMetrics();
+            x = (panelWidth - metrics.stringWidth(scoreText)) / 2;
+            g.drawString(scoreText, x, y + 40);
+            
+            // Best Score Display
+            String bestScoreText = "Best Score: " + bestScore;
+            metrics = g.getFontMetrics();
+            x = (panelWidth - metrics.stringWidth(bestScoreText)) / 2;
+            g.drawString(bestScoreText, x, y + 80);
+            
+            // Instructions: Press Space to play again
+            g.setFont(new Font("Arial", Font.PLAIN, 16));
+            String instructions = "Press 'Space' to Play Again";
+            metrics = g.getFontMetrics();
+            x = (panelWidth - metrics.stringWidth(instructions)) / 2;
+            g.drawString(instructions, x, y + 120);
+    
+            // --- Leaderboard Section ---
+            int leaderboardPanelWidth = 250; // Width of the leaderboard panel
+            int leaderboardPanelHeight = 100; // Height of the leaderboard panel
+            int leaderboardX = (panelWidth - leaderboardPanelWidth) / 2; // Centered horizontally
+            int leaderboardY = 30; // Positioned near the top
+    
+            // Leaderboard Background
+            g.setColor(new Color(0, 0, 0, 150)); // Transparent black background
+            g.fillRect(leaderboardX, leaderboardY, leaderboardPanelWidth, leaderboardPanelHeight);
+    
+            // Leaderboard Title
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.drawString("Leaderboard", leaderboardX + 60, leaderboardY + 20); // Centered title
+    
+            // Leaderboard Entries
+            g.setFont(new Font("Arial", Font.PLAIN, 17));
+            int yPosition = leaderboardY + 40;
+            for (int i = 0; i < leaderboard.size(); i++) {
+                g.drawString((i + 1) + ". " + leaderboard.get(i), leaderboardX + 80, yPosition+2);
+                yPosition += 20;
+            }
+    
+            repaint();
             return;
         }
-    
+        
         // Gambar elemen game
         doodler.draw(g);
         for (Platform platform : platforms) {
             platform.draw(g);
         }
-    
-        // Menampilkan informasi skor dalam kotak transparan
+        
+        // Menampilkan informasi skor dalam kotak transparan seperti saat bermain
         g.setColor(new Color(0, 0, 0, 150)); // Warna hitam dengan transparansi
         g.fillRect(10, 10, 150, 80); // Kotak transparan untuk teks
-    
+        
         g.setColor(Color.WHITE); // Warna teks putih
         g.setFont(new Font("Arial", Font.PLAIN, 18));
         g.drawString("Score: " + score, 20, 30);
         g.drawString("Best Score: " + bestScore, 20, 50); // Menampilkan best score
         g.drawString("Player: " + username, 20, 70); // Menampilkan username
-    
-        // Menampilkan leaderboard dalam kotak transparan
-        g.setColor(new Color(0, 0, 0, 150)); // Warna hitam dengan transparansi
-        g.fillRect(panelWidth - 170, 10, 150, 80); // Kotak transparan untuk leaderboard
-    
-        g.setColor(Color.WHITE); // Warna teks putih
-        g.setFont(new Font("Arial", Font.PLAIN, 14));
-        g.drawString("Leaderboard:", panelWidth - 150, 25);
-        int yPosition = 40;
-        for (int i = 0; i < leaderboard.size(); i++) {
-            g.drawString((i + 1) + ". " + leaderboard.get(i), panelWidth - 150, yPosition);
-            yPosition += 20;
-        }
     }
     
+    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!gameOver) {
             doodler.update();
 
-    
             for (Platform platform : platforms) {
                 // Detect collision with the doodler
                 if (Utilities.detectCollision(doodler, platform)) {
@@ -192,13 +239,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 } else {
                     doodler.setIsOnPlatform(false);
                 }
-    
+
                 // Move platforms that go off-screen
                 if (platform.getY() > getHeight()) {
                     platform.resetPosition(-20); // Reset to the top of the screen
                 }
             }
-    
+
             // Move the platforms down if Doodler reaches the top
             if (doodler.getY() < 300) {
                 backgroundOffset += 5;
@@ -206,11 +253,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     platform.moveDown(5);
                 }
             }
-    
+
             if (backgroundOffset > background.getHeight(null) - getHeight()) {
                 backgroundOffset = 0;
             }
-    
+
             // Game Over Condition
             if (doodler.getY() > getHeight()) {
                 gameOver = true;
@@ -233,7 +280,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         repaint();
     }
-    
+
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_LEFT) {
@@ -241,9 +288,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             doodler.moveRight();
         } else if (e.getKeyCode() == KeyEvent.VK_SPACE && gameOver) {
+            // Tombol Space untuk restart permainan
             restartGame();
         }
+
     }
+
 
     @Override
     public void keyReleased(KeyEvent e) {

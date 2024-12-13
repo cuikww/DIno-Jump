@@ -37,14 +37,13 @@ public class Database {
     // Method untuk mendaftarkan user baru
     public static boolean register(String username, String password) {
         boolean success = false;
-        String sql = "INSERT INTO profile (username, password, best_score, karakter) VALUES (?, ?, ?,?)";
+        String sql = "INSERT INTO profile (username, password, best_score) VALUES (?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
             stmt.setString(2, password);
             stmt.setInt(3, 0);  // Set skor awal ke 0
-            stmt.setString(4, "dino_kuning");  // Set karakter default
 
             int rowsInserted = stmt.executeUpdate();
             if (rowsInserted > 0) {
