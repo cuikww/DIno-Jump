@@ -14,8 +14,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int score;
     private int backgroundOffset;
     private boolean background1Complete;  // Menandakan apakah background1 sudah selesai
+    private String username;
     
-    public GamePanel() {
+    public GamePanel(String username) {
+        this.username = username;
         this.setFocusable(true);
         this.addKeyListener(this);
         background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
