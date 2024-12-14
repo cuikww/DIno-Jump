@@ -13,7 +13,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Timer timer;
     private Doodler doodler;
     private ArrayList<Platform> platforms;
-    private Image background;
+    private Image backgroundTanah;
+    private Image backgroundSpace;
     private boolean gameOver;
     private int score;
     private int backgroundOffset;
@@ -24,6 +25,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Clip jumpSound;
     private Clip gameOverSound;
     private Clip backSound;
+    int y1;
+    int y2;
+    // private boolean firstImageActive = true;
 
     public GamePanel(String username, String selectedCharacter) {
         this.username = username;
@@ -31,7 +35,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         this.addKeyListener(this);
 
         // Muat background
-        background = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
+        backgroundTanah = new ImageIcon(getClass().getResource("/assets/All BG.png")).getImage();
+        backgroundSpace = new ImageIcon(getClass().getResource("/assets/Space2.png")).getImage();
+        // rescale background
+        // backgroundTanah = backgroundTanah.getScaledInstance(360, 630, Image.SCALE_SMOOTH);
+        // backgroundSpace = backgroundSpace.getScaledInstance(360, 630, Image.SCALE_SMOOTH);
+
+        y1 = 0;
+        y2 = -getHeight();
 
         // Muat Doodler dengan karakter yang dipilih
         doodler = new Doodler(160, 430, selectedCharacter);
@@ -75,45 +86,83 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void initializePlatforms() {
-        int screenWidth = getWidth(); // Get screen width
+        int screenWidth = getWidth();
         for (int i = 0; i < 6; i++) {
+            Platform newPlatform;
             if (i == 0) {
-                platforms.add(new Platform(160, 480, screenWidth));
+                newPlatform = new Platform(160, 480, screenWidth, "normal");
+            } else if (i == 2) {
+                // Tambahkan platform breakable
+                newPlatform = new Platform((int) (Math.random() * 300), 500 - i * 100, screenWidth, "breakable");
             } else {
                 int x = (int) (Math.random() * 300);
                 int y = 500 - i * 100;
-                Platform platform = new Platform(x, y, screenWidth);
+                newPlatform = new Platform(x, y, screenWidth, "normal");
                 if (i == 3) {
-                    platform.setSpeed(2); // Set horizontal speed for moving platform
+                    newPlatform.setSpeed(2); // Platform bergerak
                 }
-                platforms.add(platform);
+            }
+    
+            // Periksa apakah platform baru bertabrakan dengan platform yang sudah ada
+            while (isOverlapping(newPlatform)) {
+                newPlatform.resetPosition(500 - i * 100); // Geser ke posisi baru jika bertabrakan
+            }
+    
+            platforms.add(newPlatform); // Tambahkan platform setelah memastikan tidak bertabrakan
+        }
+    }
+        
+    private boolean isOverlapping(Platform newPlatform) {
+        for (Platform existingPlatform : platforms) {
+            Rectangle newRect = new Rectangle(newPlatform.getX(), newPlatform.getY(), newPlatform.getWidth(), newPlatform.getHeight());
+            Rectangle existingRect = new Rectangle(existingPlatform.getX(), existingPlatform.getY(), existingPlatform.getWidth(), existingPlatform.getHeight());
+            if (newRect.intersects(existingRect)) {
+                return true; // Platform bertabrakan
             }
         }
+        return false; // Tidak ada tabrakan
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
+        // Graphics2D g2d = (Graphics2D) g;
+
         // Dapatkan ukuran panel
         int panelWidth = getWidth();
         int panelHeight = getHeight();
-        int imageWidth = background.getWidth(null);
-        int imageHeight = background.getHeight(null);
+        int imageWidth = backgroundTanah.getWidth(null);
+        int imageHeight = backgroundTanah.getHeight(null);
         
-        // Menghitung ukuran background agar sesuai dengan panel
+        // // Menghitung ukuran background agar sesuai dengan panel
         double scaleX = (double) panelWidth / imageWidth;
         double scaleY = (double) panelHeight / imageHeight;
         double scaleFactor = Math.max(scaleX, scaleY);
         
-        // Skala background
+        // // Skala background
         int scaledWidth = (int) (imageWidth * scaleFactor);
         int scaledHeight = (int) (imageHeight * scaleFactor);
         
         // Menggambar latar belakang secara looping
-        g.drawImage(background, 0, -scaledHeight + panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
-        g.drawImage(background, 0, panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
+        g.drawImage(backgroundTanah, 0, -scaledHeight + panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
+        g.drawImage(backgroundTanah, 0, panelHeight + backgroundOffset, scaledWidth, scaledHeight, null);
         
+        if (backgroundOffset >= scaledHeight - panelHeight) {
+            int offsetForBackground2 = backgroundOffset - (scaledHeight - panelHeight);
+            g.drawImage(backgroundSpace, 0, -scaledHeight + panelHeight + offsetForBackground2, scaledWidth, scaledHeight, null);
+            g.drawImage(backgroundSpace, 0, panelHeight + offsetForBackground2, scaledWidth, scaledHeight, null);
+        }
+
+        // if(firstImageActive){
+        //     g2d.drawImage(backgroundTanah, 0, y1,  null);
+        //     g2d.drawImage(backgroundSpace, 0, y2, null);
+        // } else {
+        //     g2d.drawImage(backgroundSpace, 0, y2, null);
+        //     g2d.drawImage(backgroundSpace, 0, y2 - backgroundSpace.getHeight(null), null);
+        // }
+        // g2d.drawImage(backgroundTanah, 0, 100, panelWidth, panelHeight, null);
+        // g2d.drawImage(backgroundSpace, 0, -100, panelWidth, panelHeight, null);
+
         if (gameOver) {
             // Game Over Panel Background (semi-transparent)
             g.setColor(new Color(0, 0, 0, 150)); // Semi-transparent black
@@ -191,114 +240,142 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g.drawString("Best Score: " + bestScore, 20, 50); // Menampilkan best score
         g.drawString("Player: " + username, 20, 70); // Menampilkan username
     }
-    
-    
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!gameOver) {
             doodler.update();
-
+    
             for (Platform platform : platforms) {
                 // Move the platform if it is the moving one
                 if (platform.getSpeed() != 0) {
                     platform.moveLeftRight();
                 }
-
+    
                 // Detect collision with the doodler
                 if (Utilities.detectCollision(doodler, platform)) {
                     // If Doodler is falling and on top of the platform, jump
                     if (doodler.getVelocityY() > 0) {
                         doodler.setIsOnPlatform(true);
                         backSound.start();
-
+    
                         doodler.jump();
-                        
+    
                         // Play jump sound
                         jumpSound.setFramePosition(0); // Rewind the sound to the beginning
                         jumpSound.start();
-                        
-                        // Check if Doodler has landed on a new platform
-                        if (!platform.getIsPassed()) {
-                            platform.setIsPassed(true);
-                            
-                            // Get the current platform's index
-                            int currentIndex = platforms.indexOf(platform);
-                            
-                            // Check if this is the first platform the Doodler lands on
-                            if (passedPlatforms.isEmpty()) {
-                                passedPlatforms.add(platform);  // Add the first platform to passedPlatforms
-                                score = 1; // Score starts at 1 since the Doodler starts on the first platform
-                            } else {
-                                // Get the last passed platform index
-                                Platform lastPassedPlatform = passedPlatforms.get(passedPlatforms.size() - 1);
-                                int lastIndex = platforms.indexOf(lastPassedPlatform);
-                    
-                                // Calculate the score based on index difference
-                                int diff = 0;
-                    
-                                // If current platform index is greater than the last one, normal difference
-                                if (currentIndex > lastIndex) {
-                                    diff = currentIndex - lastIndex;
-                                }
-                                // If current platform index is less than the last one, circular difference
-                                else if (currentIndex < lastIndex) {
-                                    diff = (platforms.size() - lastIndex) + currentIndex; // Wrap around
-                                }
-                    
-                                score += diff;  // Update score with the calculated difference
+    
+                        // Handle breakable platforms
+                        if (platform.isBreakable()) {
+                            platform.incrementHitCount(); // Increment the hit count
+    
+                            // Check hit count
+                            if (platform.getHitCount() == 1) {
+                                // Change to broken image
+                                platform.setIsPassed(true); // Mark as passed
+                            } else if (platform.getHitCount() > 1) {
+                                // Remove the platform after it breaks
+                                platform.resetPosition(-20); // Move off-screen
                             }
-                    
-                            passedPlatforms.add(platform);  // Add this platform to passedPlatforms
+                        } else {
+                            // Normal platform handling
+                            if (!platform.getIsPassed()) {
+                                platform.setIsPassed(true);
+    
+                                // Get the current platform's index
+                                int currentIndex = platforms.indexOf(platform);
+    
+                                // Check if this is the first platform the Doodler lands on
+                                if (passedPlatforms.isEmpty()) {
+                                    passedPlatforms.add(platform); // Add the first platform to passedPlatforms
+                                    score = 1; // Score starts at 1 since the Doodler starts on the first platform
+                                } else {
+                                    // Get the last passed platform index
+                                    Platform lastPassedPlatform = passedPlatforms.get(passedPlatforms.size() - 1);
+                                    int lastIndex = platforms.indexOf(lastPassedPlatform);
+    
+                                    // Calculate the score based on index difference
+                                    int diff = 0;
+    
+                                    // If current platform index is greater than the last one, normal difference
+                                    if (currentIndex > lastIndex) {
+                                        diff = currentIndex - lastIndex;
+                                    }
+                                    // If current platform index is less than the last one, circular difference
+                                    else if (currentIndex < lastIndex) {
+                                        diff = (platforms.size() - lastIndex) + currentIndex; // Wrap around
+                                    }
+    
+                                    score += diff; // Update score with the calculated difference
+                                }
+    
+                                passedPlatforms.add(platform); // Add this platform to passedPlatforms
+                            }
                         }
                     }
-                    
+    
                 } else {
                     doodler.setIsOnPlatform(false);
                 }
-
+    
                 // Move platforms that go off-screen
                 if (platform.getY() > getHeight()) {
                     platform.resetPosition(-20); // Reset to the top of the screen
                 }
             }
-
+    
+            // if(firstImageActive){
+            //     y1 += 5;
+            //     y2 += 5;
+            //     if(y1 >= getHeight()){
+            //         firstImageActive = false;
+            //         y2 = 0;
+            //     }
+            // } else {
+            //     y2 += 5;
+            //     if(y2 >= getHeight()){
+            //         y2 = 0;
+            //     }
+            // }
             // Move the platforms down if Doodler reaches the top
             if (doodler.getY() < 300) {
                 backgroundOffset += 5;
+
                 for (Platform platform : platforms) {
                     platform.moveDown(5);
                 }
             }
-
-            if (backgroundOffset > background.getHeight(null) - getHeight()) {
+            // Reset the background offset if it reaches the end
+            if (backgroundOffset > backgroundTanah.getHeight(null) - getHeight()) {
                 backgroundOffset = 0;
             }
-
+            repaint();
             // Game Over Condition
             if (doodler.getY() > getHeight()) {
+                y1 = 0;
+                y2 = -getHeight();
                 gameOver = true;
                 backgroundOffset = 0;
-
+    
                 backSound.stop();
                 backSound.setFramePosition(0);
-            
+    
                 // Play game over sound
                 gameOverSound.setFramePosition(0); // Rewind the sound to the beginning
                 gameOverSound.start();
-            
+    
                 // Update best score if the score is higher
                 if (score > bestScore) {
                     bestScore = score;
                     Database.updateBestScore(username, bestScore); // Update best score in the database
                 }
-            
+    
                 // Refresh leaderboard
                 this.leaderboard = Database.getTop3BestScores();
             }
-            
         }
         repaint();
+        revalidate();
     }
 
     @Override
@@ -313,7 +390,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
 
     }
-
 
     @Override
     public void keyReleased(KeyEvent e) {

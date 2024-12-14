@@ -216,7 +216,7 @@ public class LoginPage {
         startFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         startFrame.setSize(360, 630);
         startFrame.add(startPanel);
-        startFrame.setResizable(false);
+        // startFrame.setResizable(false);
         startFrame.setLocationRelativeTo(null);
         startFrame.setVisible(true);
     }
