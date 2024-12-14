@@ -8,7 +8,7 @@ public class Platform extends GameObject implements Movable {
 
     public Platform(int x, int y) {
         super(x, y, 60, 18);
-        platformImage = new ImageIcon("Dino Jump\\src\\assets\\platform-g-normal.png").getImage();
+        platformImage = new ImageIcon("src\\assets\\platform-g-normal.png").getImage();
 
     }
 
@@ -40,7 +40,7 @@ public class Platform extends GameObject implements Movable {
     }
 
     public void resetPosition(int newY) {
-        this.x = (int) (Math.random() * 300); // Posisi X acak
-        this.y = newY;                        // Posisi Y baru
+        this.x = (int) (Math.random() * 300);
+        this.y = newY;                       
     }
 }
