@@ -21,6 +21,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int bestScore;
     private java.util.List<String> leaderboard;
     private List<Platform> passedPlatforms;
+    private Clip jumpSound;
+    private Clip gameOverSound;
+    private Clip backSound;
 
     public GamePanel(String username, String selectedCharacter) {
         this.username = username;
@@ -35,7 +38,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         platforms = new ArrayList<>();
         passedPlatforms = new ArrayList<>(); // Initialize passedPlatforms list here
-        initializePlatforms();
 
         timer = new Timer(16, this); // ~60 FPS
         gameOver = false;
@@ -45,9 +47,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         this.leaderboard = Database.getTop3BestScores(); // Ambil leaderboard dari database
         loadSounds(); // Load sounds for jump and game over
     }
-    
-    private Clip jumpSound;
-    private Clip gameOverSound;
 
     public void loadSounds() {
         try {
@@ -60,6 +59,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             AudioInputStream gameOverStream = AudioSystem.getAudioInputStream(getClass().getResource("/assets/gameOver.wav"));
             gameOverSound = AudioSystem.getClip();
             gameOverSound.open(gameOverStream);
+
+            AudioInputStream backsoundStream = AudioSystem.getAudioInputStream(getClass().getResource("/assets/inGame.wav"));
+            backSound = AudioSystem.getClip();
+            backSound.open(backsoundStream);
+            backSound.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             e.printStackTrace(); // Handle errors if the sound file is not found or cannot be played
         }
@@ -67,16 +71,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     public void startGame() {
         timer.start();
+        initializePlatforms();
     }
 
     private void initializePlatforms() {
+        int screenWidth = getWidth(); // Get screen width
         for (int i = 0; i < 6; i++) {
             if (i == 0) {
-                platforms.add(new Platform(160, 480));
+                platforms.add(new Platform(160, 480, screenWidth));
             } else {
                 int x = (int) (Math.random() * 300);
                 int y = 500 - i * 100;
-                platforms.add(new Platform(x, y));
+                Platform platform = new Platform(x, y, screenWidth);
+                if (i == 3) {
+                    platform.setSpeed(2); // Set horizontal speed for moving platform
+                }
+                platforms.add(platform);
             }
         }
     }
@@ -190,11 +200,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             doodler.update();
 
             for (Platform platform : platforms) {
+                // Move the platform if it is the moving one
+                if (platform.getSpeed() != 0) {
+                    platform.moveLeftRight();
+                }
+
                 // Detect collision with the doodler
                 if (Utilities.detectCollision(doodler, platform)) {
                     // If Doodler is falling and on top of the platform, jump
                     if (doodler.getVelocityY() > 0) {
                         doodler.setIsOnPlatform(true);
+                        backSound.start();
+
                         doodler.jump();
                         
                         // Play jump sound
@@ -262,6 +279,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (doodler.getY() > getHeight()) {
                 gameOver = true;
                 backgroundOffset = 0;
+
+                backSound.stop();
+                backSound.setFramePosition(0);
             
                 // Play game over sound
                 gameOverSound.setFramePosition(0); // Rewind the sound to the beginning

@@ -18,7 +18,7 @@ public class Database {
         boolean success = false;
         String sql = "SELECT * FROM profile WHERE username = ? AND password = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
             stmt.setString(2, password);
@@ -39,7 +39,7 @@ public class Database {
         boolean success = false;
         String sql = "INSERT INTO profile (username, password, best_score) VALUES (?, ?, ?)";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
             stmt.setString(2, password);
